@@ -1,0 +1,1098 @@
+---
+title: "Reporte Tecnico"
+author: 'Elizabeth Patricia Gorostieta Canela - 137107, Anelisse Palacios Ramirez
+  - 136082 '
+date: "22 de marzo de 2015"
+output: word_document
+---
+
+
+```{r Directorio, echo=FALSE}
+
+directorio <- "/Users/eligoros/Desktop/Proyecto"
+setwd(directorio)
+
+```
+
+
+##Introduccion
+La Diabetes Mellitus Tipo II es una enfermedad cronica en la cual se presenta un  trastorno metabolico que se caracteriza por un alto nivel de glucosa en la sangre a causa de la resistencia a la insulina y falta relativa de la misma.
+
+La razon por la cual es importante analizar los datos relacionados con la Diabetes Mellitus Tipo II es debido a que los cambios en la morbilidad y la mortalidad de los casos observados a nivel nacional e internacional han mostrado un proceso de transicion epidemiologica resultante de los cambios que ocurren en los procesos economico, politico y social. Por ello requieren ser monitoreados.
+
+Para mayor informacion, se puede consultar la pagina de la Federacion Mexicana de Diabetes: http://www.fmdiabetes.org/fmd/pag/diabetes_numeros.php
+
+#### <span style = "color: green"> Conjunto de Datos </span>
+La informacion fue proporcionada por la Direccion General de Epidemiologia de la Secretaria de Salud,  los datos van desde el 2003 hasta el 2013, divididos en tres categorias (mes, grupo de edad y fuente), que a su vez, se reporta por genero (masculino, femenino ) y  general en el que se considera ambos generos.
+
+La informacion puede consultarse en la siguente pagina: http://www.epidemiologia.salud.gob.mx/anuario/html/anuarios.html.
+
+Las categorias son la siguientes: 
+
+-Diabetes Mellitus Tipo II por fuente de atencion : Presenta el numero de personas diagnosticadas con diabetes mellitus no insulinodependiente por estado en la Republica Mexicana, el cual fue presentado por varias Instituciones Gubernamentales
+
+-Diabetes Mellitus Tipo II por grupo de edad : Presenta el numero de personas diagnosticadas con diabetes mellitus no insulinodependiente por estado en la Republica Mexicana, el cual fue presentado por edad en los que se presento la enfermedad.
+
+-Diabetes Mellitus Tipo II por mes : Presenta el numero de personas diagnosticadas con diabetes mellitus no insulinodependiente por estado en la Republica Mexicana, el cual fue presentado por mes.
+
+#### <span style = "color: green"> Objetivo del documento </span>
+En este documento se presenta una analisis de los casos de Diabetes Mellitus Tipo II en Mexico, durante el periodo 2003-2013, basado en los datos registrados por la Direccion General de Epidemiologia de la Secretaria de Salud. 
+
+En este documento se presentan algunos problemas relacionados con la Diabetes Mellitus Tipo II, se hace mencion de como fueron obtenido los datos y se realiza una breve descripcion de los mismos, posteriormente se limpian los datos para facilitar su manipulacion y analisis; en seguida se realizan pruebas de calidad sobre los datos transformados y se procede a realizar el analisis exploratorio con el objetivo de resolver los problemas que se plantearon al comienzo y finalmente se presentan las conclusiones del trabajo realizado.
+
+##Definicion del Problema
+Es necesario identificar cuales son las instituciones que atienden un mayor numero de casos,en que Estados se presentan con  mayor recurrencia el padecimiento, que genero se ve mas afectado y cuales son los grupos de edad mayormente afectados. Con ello se podra realizar una mejor asignacion de recursos y se identificaran prioridades de accion para la prevencion de la enfermedad.
+
+##Obtencion y Descripcion de los Datos
+#### <span style = "color: green"> Recursos Utilizados </span>
+Los datos empleados para el analisis fueron obtenidos de la siguiente pagina: http://www.epidemiologia.salud.gob.mx/anuario/html/anuarios.html, la informacion fue obtenida en formato .pdf y posteriormente fue transformada mediante el software Tabula a formato .csv; el analisis de los datos se realizo en RStudio.
+
+La informacion tecnica de la Sesion en RStudio se presenta a continuacion:
+```{r Informacionde la Sesion, echo=FALSE}
+sessionInfo()
+```
+
+#### <span style = "color: green"> Obtencion de los Datos </span>
+```{r Lectura de Datos, echo=FALSE}
+library(plyr)
+
+#Fuente de Atenci??n
+diabetes.fuente <- NULL
+titulos.fuente <- NULL
+for (i in 1:11){
+diabetes.fuente[[i]] <- read.csv(paste("./DATOS/BRUTOS/FUENTE/Femenino",i+2002,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.fuente[i] <- paste("fuente-f",i+2002,sep="")
+}
+for (i in 12:22){
+diabetes.fuente[[i]] <- read.csv(paste("./DATOS/BRUTOS/FUENTE/General",i+1991,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.fuente[i] <- paste("fuente-g",i+1991,sep="")
+}
+for (i in 23:33){
+diabetes.fuente[[i]] <- read.csv(paste("./DATOS/BRUTOS/FUENTE/Masculino",i+1980,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.fuente[i] <- paste("fuente-m",i+1980,sep="")
+}
+
+names(diabetes.fuente) <- titulos.fuente
+diabetes.melitus2.fuente <- ldply(diabetes.fuente,data.frame)
+save(diabetes.melitus2.fuente, file="Diabetes_Melitus2_Fuente.RData")
+
+
+#Grupo de edades
+diabetes.edad <- NULL
+titulos.edad <- NULL
+for (i in 1:11){
+diabetes.edad[[i]] <- read.csv(paste("./DATOS/BRUTOS/GRUPO/Femenino",i+2002,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.edad[i] <- paste("edad-f",i+2002,sep="")
+}
+for (i in 12:22){
+diabetes.edad[[i]] <- read.csv(paste("./DATOS/BRUTOS/GRUPO/General",i+1991,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.edad[i] <- paste("edad-g",i+1991,sep="")
+}
+for (i in 23:33){
+diabetes.edad[[i]] <- read.csv(paste("./DATOS/BRUTOS/GRUPO/Masculino",i+1980,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.edad[i] <- paste("edad-m",i+1980,sep="")
+}
+
+names(diabetes.edad) <- titulos.edad
+diabetes.melitus2.edad <- ldply(diabetes.edad,data.frame)
+save(diabetes.melitus2.edad, file="Diabetes_Melitus2_Edad.RData")
+
+
+#Mes de Observacion
+diabetes.mes <- NULL
+titulos.mes <- NULL
+for (i in 1:11){
+diabetes.mes[[i]] <- read.csv(paste("./DATOS/BRUTOS/MES/Femenino",i+2002,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.mes[i] <- paste("mes-f",i+2002,sep="")
+}
+for (i in 12:22){
+diabetes.mes[[i]] <- read.csv(paste("./DATOS/BRUTOS/MES/General",i+1991,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.mes[i] <- paste("mes-g",i+1991,sep="")
+}
+for (i in 23:33){
+diabetes.mes[[i]] <- read.csv(paste("./DATOS/BRUTOS/MES/Masculino",i+1980,".csv",sep=""),stringsAsFactors=FALSE)
+titulos.mes[i] <- paste("mes-m",i+1980,sep="")
+}
+
+names(diabetes.mes) <- titulos.mes
+diabetes.melitus2.mes <- ldply(diabetes.mes,data.frame)
+save(diabetes.melitus2.mes, file="Diabtes_Melitus2_Mes.RData")
+```
+
+Se realiza la lectura de los 99 archivos para el periodo que abarca desde el 2003 hasta el 2013; existen 3 tipos de base de datos: Casos Registrados por Fuente de Atencion, Casos Registrados por Grupo de Edad y Casos Registrados por Mes; para cada grupo se registran 3 categorias: femenino, masculino y general.
+
+Posteriormente se realiza la consolidacion de los archivos para cada una de las bases y se generan tres nuevas bases de datos "diabetes.melitus2.fuente","diabetes.melitus2.edad" y "diabetes.melitus2.mes". 
+
+A continuacion se presenta una parte de las nuevas bases de datos:
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Fuente de Atencion* </span>
+```{r, echo=FALSE}
+tail(diabetes.melitus2.fuente)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Mes* </span>
+```{r, echo=FALSE}
+head(diabetes.melitus2.mes)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Grupo de Edad* </span>
+```{r, echo=FALSE}
+tail(diabetes.melitus2.edad)
+```
+
+La estructura de los archivos y las variables que cada uno incluye se pesentan a continuacion:
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Grupo de Edad* </span>
+```{r, echo=FALSE}
+str(diabetes.melitus2.edad)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Fuente de Atencion* </span>
+```{r, echo=FALSE}
+str(diabetes.melitus2.fuente)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Mes* </span>
+```{r, echo=FALSE}
+str(diabetes.melitus2.mes)
+```
+
+#### <span style = "color: green"> Mejoras Sugeridas a la Base de Datos </span>
+Observando los extractos anteriores se puede ver que la informacion presentada es dificil de manejar y por ello realizar su analisis se complica; es necesario transformar la informacion en un formato manejable. La informacion presentada puede generar sesgos en el analisis puesto que para los casos de diabetes por grupo de edad, los grupos definidos no involucran los mismos intervalos de edad, pudiendo generar una mayor concentracion para el grupo que abarca un mayor intervalo. 
+Como sugerencia futura se deben definir los grupos de edad de manera uniforme, es decir considerando los mismos intervalos para todos los anios.
+
+#### <span style = "color: green"> Alcance de los Datos y sus Limitaciones </span>
+La calidad de la informacion determina el analisis que se puede realizar con ella, con la informacion obtenida haremos un analisis por niveles ya que no se presenta la informacion necesaria para eliminar el sesgo y realizar el analisis por tasas. 
+
+
+##Transformacion de los Datos
+Para facilitar el analisis de la informacion se realizara la transformacion de los archivos originales. 
+Los cambios se realizados se presentan a continuacion:
+
+#### <span style = "color: green"> Se agregan dos nuevas variables y se elimina otra </span>
+Se introducen dos nuevas variables: Periodo y Sexo, en cada una de las 3 bases de datos (diabetes.melitus2.fuente, diabetes.melitus2.edad y diabetes.melitus2.mes). Se elimina a su vez la variable .id.
+
+```{r Nuevas Columnas, echo=FALSE}
+#Se introducen nuevas variables: Sexo y Periodo; y se elimina la variable .id en la base diabetes.melitus2.fuente
+diabetes.melitus2.fuente$Periodo <- factor(substr(diabetes.melitus2.fuente$.id,9,12), ordered=TRUE)
+diabetes.melitus2.fuente$Sexo <- factor(substr(diabetes.melitus2.fuente$.id,8,8))
+diabetes.melitus2.fuente$.id <- NULL
+diabetes.melitus2.fuente <- within(diabetes.melitus2.fuente,{
+  Sexo <- gsub("m","Masculino",Sexo,fixed=TRUE)
+  Sexo <- gsub("f","Femenino",Sexo,fixed=TRUE)
+  Sexo <- gsub("g","General",Sexo,fixed=TRUE)
+ })
+
+save(diabetes.melitus2.fuente, file="Diabetes_Melitus2_Fuente(Sexo-Periodo).RData")
+
+
+#Se introducen nuevas variables: Sexo y Periodo; y se elimina la variable .id en la base diabetes.melitus2.edad
+
+diabetes.melitus2.edad$Periodo <- factor(substr(diabetes.melitus2.edad$.id,7,10), ordered=TRUE)
+diabetes.melitus2.edad$Sexo <- factor(substr(diabetes.melitus2.edad$.id,6,6))
+diabetes.melitus2.edad$.id <- NULL
+diabetes.melitus2.edad <- within(diabetes.melitus2.edad,{
+  Sexo <- gsub("m","Masculino",Sexo,fixed=TRUE)
+  Sexo <- gsub("f","Femenino",Sexo,fixed=TRUE)
+  Sexo <- gsub("g","General",Sexo,fixed=TRUE)
+ })
+
+save(diabetes.melitus2.edad, file="Diabetes_Melitus2_Edad(Sexo-Periodo).RData")
+
+
+#Se introducen nuevas variables: Sexo y Periodo; y se elimina la variable .id en la base diabetes.melitus2.mes
+
+diabetes.melitus2.mes$Periodo <- factor(substr(diabetes.melitus2.mes$.id,6,9), ordered=TRUE)
+diabetes.melitus2.mes$Sexo <- factor(substr(diabetes.melitus2.mes$.id,5,5))
+diabetes.melitus2.mes$.id <- NULL
+diabetes.melitus2.mes <- within(diabetes.melitus2.mes,{
+  Sexo <- gsub("m","Masculino",Sexo,fixed=TRUE)
+  Sexo <- gsub("f","Femenino",Sexo,fixed=TRUE)
+  Sexo <- gsub("g","General",Sexo,fixed=TRUE)
+ })
+
+save(diabetes.melitus2.mes, file="Diabetes_Melitus2_Mes(Sexo-Periodo).RData")
+```
+
+Para facilitar el manejo de los datos, se realiza la conversion de las variables Estado y Sexo a escala nominal.
+
+```{r Variable Nominal, echo=FALSE}
+#Se cambian las variables a tipo nominal de la base diabetes.melitus2.fuente
+diabetes.melitus2.fuente$Estado <- factor(diabetes.melitus2.fuente$Estado)
+diabetes.melitus2.fuente$Sexo <- factor(diabetes.melitus2.fuente$Sexo)
+
+save(diabetes.melitus2.fuente,file="Diabetes_Fuente_Limpio.RData")
+
+
+#Se cambian las variables a tipo nominal de la base picadura.alacran.estado
+diabetes.melitus2.edad$Estado <- factor(diabetes.melitus2.edad$Estado)
+diabetes.melitus2.edad$Sexo <- factor(diabetes.melitus2.edad$Sexo)
+
+save(diabetes.melitus2.edad,file="Diabetes_Edad_Limpio.RData")
+
+
+#Se cambian las variables a tipo nominal de la base picadura.alacran.mes
+diabetes.melitus2.mes$Estado <- factor(diabetes.melitus2.mes$Estado)
+diabetes.melitus2.mes$Sexo <- factor(diabetes.melitus2.mes$Sexo)
+
+save(diabetes.melitus2.mes,file="Diabetes_Mes_Limpio.RData")
+```
+
+#### <span style = "color: green"> Eliminacion de los espacios registrados en las observaciones </span>
+Se eliminan los espacios que se encuentran en las bases "diabetes.melitus2.fuente", "diabetes.melitus2.edad" y "diabetes.melitus2.mes", tanto de las observaciones numericas como de los registros de los estados.
+```{r Eliminacion de Espacios, echo=FALSE}
+
+#Se eliminan espacios de diabetes.melitus2.mes
+diabetes.melitus2.mes$Estado <- gsub("[ ]{1,}$","",diabetes.melitus2.mes$Estado)
+
+diabetes.melitus2.mes <- within(diabetes.melitus2.mes, {
+     ENE <- gsub("[ ]{1,}","",ENE)
+     FEB <- gsub("[ ]{1,}","",FEB)
+     MAR <- gsub("[ ]{1,}","",MAR)
+     ABR <- gsub("[ ]{1,}","",ABR)
+     MAY <- gsub("[ ]{1,}","",MAY)
+     JUN <- gsub("[ ]{1,}","",JUN)
+     JUL <- gsub("[ ]{1,}","",JUL)
+     AGO <- gsub("[ ]{1,}","",AGO)
+     SEP <- gsub("[ ]{1,}","",SEP)
+     OCT <- gsub("[ ]{1,}","",OCT)
+     NOV <- gsub("[ ]{1,}","",NOV)
+     DIC <- gsub("[ ]{1,}","",DIC)
+     Total <- gsub("[ ]{1,}","",Total)
+     Tasa. <- gsub("[ ]{1,}","",Tasa.)
+ })
+
+#Se eliminan espacios de diabetes.melitus2.fuente
+diabetes.melitus2.fuente$Estado <- gsub("[ ]{1,}$","",diabetes.melitus2.fuente$Estado)
+
+diabetes.melitus2.fuente <- within(diabetes.melitus2.fuente, {
+     SSA <- gsub("[ ]{1,}","",SSA)
+     IMSS.ORD <- gsub("[ ]{1,}","",IMSS.ORD)
+     ISSSTE <- gsub("[ ]{1,}","",ISSSTE)
+     IMSS.OP <- gsub("[ ]{1,}","",IMSS.OP)
+     DIF <- gsub("[ ]{1,}","",DIF)
+     PEMEX <- gsub("[ ]{1,}","",PEMEX)
+     SEDENA <- gsub("[ ]{1,}","",SEDENA)
+     SEMAR <- gsub("[ ]{1,}","",SEMAR)
+     OTRAS <- gsub("[ ]{1,}","",OTRAS)
+     Total <- gsub("[ ]{1,}","",Total)
+ })
+
+#Se eliminan espacios de diabetes.melitus2.edad
+diabetes.melitus2.edad$Estado <- gsub("[ ]{1,}$","",diabetes.melitus2.edad$Estado)
+
+diabetes.melitus2.edad <- within(diabetes.melitus2.edad,{
+  Menor.a.1 <- gsub("[ ]{1,}","",Menor.a.1)
+  X1.a.4 <- gsub("[ ]{1,}","",X1.a.4)
+  X5.a.9 <- gsub("[ ]{1,}","",X5.a.9)
+  X10.a.14 <- gsub("[ ]{1,}","",X10.a.14)
+  X15.a.19 <- gsub("[ ]{1,}","",X15.a.19)
+  X20.a.24 <- gsub("[ ]{1,}","",X20.a.24)
+  X25.a.44 <- gsub("[ ]{1,}","",X25.a.44)
+  X45.a.49 <- gsub("[ ]{1,}","",X45.a.49)
+  X50.a.59 <- gsub("[ ]{1,}","",X50.a.59)
+  X60.a.64 <- gsub("[ ]{1,}","",X60.a.64)
+  Mayor.a.64 <- gsub("[ ]{1,}","",Mayor.a.64)
+  Ign. <- gsub("[ ]{1,}","",Ign.)
+  Total <- gsub("[ ]{1,}","",Total)
+})
+
+```
+
+#### <span style = "color: green"> Correcion de los acentos registrados en las observaciones </span>
+En las bases de datos se presentaban errores en los siguientes Estados: Mexico, Michoacan, Nuevo Leon, Queretaro, San Luis Potosi y Yucatan.
+```{r Correcion de Acentos, echo=FALSE}
+#Se eliminan los acentos de la base diabetes.melitus2.mes
+diabetes.melitus2.mes <- within(diabetes.melitus2.mes, 
+                     {
+                       Estado <- gsub("M.*co","Mexico", Estado)
+                       Estado <- gsub("Mic.*n","Michoacan", Estado)
+                       Estado <- gsub("Nuevo.*n","Nuevo Leon", Estado)
+                       Estado <- gsub("Que.*aro","Queretaro", Estado)
+                       Estado <- gsub("San.*","San Luis Potosi", Estado)
+                       Estado <- gsub("Yuc.*n","Yucatan", Estado)                    
+})
+
+#Se eliminan los acentos de la base diabetes.melitus2.fuente
+diabetes.melitus2.fuente<- within(diabetes.melitus2.fuente, 
+                     { 
+                       Estado <- gsub("M.*co","Mexico", Estado)
+                       Estado <- gsub("Mic.*n","Michoacan", Estado)
+                       Estado <- gsub("Nuevo.*n","Nuevo Leon", Estado)
+                       Estado <- gsub("Que.*aro","Queretaro", Estado)
+                       Estado <- gsub("San.*","San Luis Potosi", Estado)
+                       Estado <- gsub("Yuc.*n","Yucatan", Estado)                  
+})
+
+#Se eliminan los acentos de la base diabetes.melitus2.edad
+diabetes.melitus2.edad <- within(diabetes.melitus2.edad, 
+                     {
+                       Estado <- gsub("M.*co","Mexico", Estado)
+                       Estado <- gsub("Mic.*n","Michoacan", Estado)
+                       Estado <- gsub("Nuevo.*n","Nuevo Leon", Estado)
+                       Estado <- gsub("Que.*aro","Queretaro", Estado)
+                       Estado <- gsub("San.*","San Luis Potosi", Estado)
+                       Estado <- gsub("Yuc.*n","Yucatan", Estado)
+                    
+})
+```
+
+#### <span style = "color: green"> Conversion a Escala Numerica </span>
+Es necesario transformar las observaciones en formato numerico para realizar el analisis exploratorio por ello, se otorga a las observaciones numericas este formato, ya que la mayoria se encontraba en formato de caracter.
+```{r Conversion a Numeric, echo=FALSE ,warning=FALSE}
+
+#Conversion de las observaciones de la base diabetes.melitus2.fuente
+diabetes.melitus2.fuente <- within(diabetes.melitus2.fuente, {
+  SSA <- as.numeric(SSA)
+  IMSS.ORD <- as.numeric(IMSS.ORD)
+  ISSSTE <- as.numeric(ISSSTE)
+  IMSS.OP <- as.numeric(IMSS.OP)
+  DIF <- as.numeric(DIF)
+  PEMEX <- as.numeric(PEMEX)
+  SEDENA <- as.numeric(SEDENA)
+  SEMAR <- as.numeric(SEMAR)
+  OTRAS <- as.numeric(OTRAS)
+  Total <- as.numeric(Total)
+})
+
+
+#Conversion de las observaciones de la base diabetes.melitus2.mes
+diabetes.melitus2.mes <- within(diabetes.melitus2.mes, {
+    ENE <- as.numeric(ENE)
+    FEB <- as.numeric(FEB)
+    MAR <- as.numeric(MAR)
+    ABR <- as.numeric(ABR)
+    MAY <- as.numeric(MAY)
+    JUN <- as.numeric(JUN)
+    JUL <- as.numeric(JUL)
+    AGO <- as.numeric(AGO)
+    SEP <- as.numeric(SEP)
+    OCT <- as.numeric(OCT)
+    NOV <- as.numeric(NOV)
+    DIC <- as.numeric(DIC)
+    Total <- as.numeric(Total)
+    Tasa. <- as.numeric(Tasa.)
+})
+
+
+
+#Conversion de las observaciones de la base diabetes.melitus2.edad
+diabetes.melitus2.edad <- within(diabetes.melitus2.edad,{
+  
+  Menor.a.1 <- as.numeric(Menor.a.1)
+  X1.a.4 <- as.numeric(X1.a.4)
+  X5.a.9 <- as.numeric(X5.a.9)
+  X10.a.14 <- as.numeric(X10.a.14)
+  X15.a.19 <- as.numeric(X15.a.19)
+  X20.a.24 <- as.numeric(X20.a.24)
+  X25.a.44 <- as.numeric(X25.a.44)
+  X45.a.49 <- as.numeric(X45.a.49)
+  X50.a.59 <- as.numeric(X50.a.59)
+  X60.a.64 <- as.numeric(X60.a.64)
+  Mayor.a.64 <- as.numeric(Mayor.a.64)
+  Ign. <- as.numeric(Ign.)
+  Total <- as.numeric(Total)
+})
+```
+
+#### <span style = "color: green"> Columnas renombradas </span> 
+Se realiza en renombre de las columnas de la base "diabetes.melitus2.edad" para mejorar su interpretacion. 
+```{r Cambiar Nombre de las columnas en la base edad, echo=FALSE}
+names(diabetes.melitus2.edad) <- c("Estado","Menor a 1","1 a 4","5 a 9", "10 a 14","15 a 19", "20 a 24","25 a 44", "45 a 49","50 a 59"," 60 a 64","Mayor a 64","Ignorada","Total", "Periodo","Sexo")
+```
+
+Las bases de datos con los cambios realizados presentan la sigiente estructura:
+
+ <span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Fuente de Atencion* </span>
+```{r, echo=FALSE}
+str(diabetes.melitus2.fuente)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Edad* </span>
+```{r, echo=FALSE}
+str(diabetes.melitus2.edad)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Mes* </span>
+```{r, echo=FALSE}
+str(diabetes.melitus2.mes)
+```
+
+## Calidad de los Datos
+Ya que los datos fueron limpiados, pasaremos al control de la calidad de los datos.
+
+#### <span style = "color: green"> Cifras de Control </span>
+Al presentarse informacion para el genero masculino, femenino y general, procederemos a comprobar que la informacion contenida en la columna general sea equivalente a la suma de los dos generos (masculino y femenino) y se almacenara esta suma en otra columna (Validacion) para realizar la comprobacion
+
+<span style = "color: blue"> *Validacion de los Casos de Diabetes Mellitus Tipo II Reportados Por Fuente de Atencion* </span>
+```{r Validacion de datos en  fuente, echo=FALSE}
+mujeresfuente.periodo <-  aggregate(Total~Periodo,data=subset(diabetes.melitus2.fuente, Sexo=="Femenino"),sum) 
+colnames(mujeresfuente.periodo) <- c("Periodo","Femenino")
+
+hombresfuente.periodo <- aggregate(Total~ Periodo,data=subset(diabetes.melitus2.fuente, Sexo=="Masculino"),sum)
+colnames(hombresfuente.periodo) <- c("Periodo","Masculino")
+
+generalfuente.periodo <- aggregate(Total~ Periodo,data=subset(diabetes.melitus2.fuente, Sexo=="General"),sum)
+colnames(generalfuente.periodo) <- c("Periodo","General")
+
+#Se crean 3 tablas con la suma de los casos por periodo para femenino y masculino; y se comparan con general
+verificacion.fuente <- merge(merge(generalfuente.periodo,hombresfuente.periodo),mujeresfuente.periodo)
+
+#Se juntan las 3 tablas en una sola
+verificacion.fuente$Validacion <- as.list(rowSums(subset(verificacion.fuente,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
+
+#Se agrega una columna con la suma de la columna Femenino y Masculino
+save(verificacion.fuente,file="Validacion_Fuente.RData")
+
+#Se presenta la nueva tabla comparativa
+verificacion.fuente
+```
+
+<span style = "color: blue"> *Validacion de los Casos de Diabetes Mellitus Tipo II Reportados Por Mes* </span>
+```{r Validacion de datos en  mes, echo=FALSE}
+mujeresmes.periodo <-  aggregate(Total~Periodo,data=subset(diabetes.melitus2.mes, Sexo=="Femenino"),sum) 
+colnames(mujeresmes.periodo) <- c("Periodo","Femenino")
+
+hombresmes.periodo <- aggregate(Total~ Periodo,data=subset(diabetes.melitus2.mes, Sexo=="Masculino"),sum)
+colnames(hombresmes.periodo) <- c("Periodo","Masculino")
+
+generalmes.periodo <- aggregate(Total~ Periodo,data=subset(diabetes.melitus2.mes, Sexo=="General"),sum)
+colnames(generalmes.periodo) <- c("Periodo","General")
+
+#Se crean 3 tablas con la suma de los casos por periodo para femenino y masculino; y se comparan con general
+verificacion.mes <- merge(merge(generalmes.periodo,hombresmes.periodo),mujeresmes.periodo)
+
+#Se juntan las 3 tablas en una sola
+verificacion.mes$Validacion <- as.list(rowSums(subset(verificacion.mes,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
+
+#Se agrega una columna con la suma de la columna Femenino y Masculino
+save(verificacion.mes,file="Validacion_Mes.RData")
+
+#Se presenta la nueva tabla comparativa 
+verificacion.mes
+
+```
+
+<span style = "color: blue"> *Validacion de los Casos de Diabetes Mellitus Tipo II Reportados Por Grupo de Edad* </span>
+```{r Validacionedad, echo=FALSE}
+mujeresedad.periodo <-  aggregate(Total~ Periodo,data=subset(diabetes.melitus2.edad, Sexo=="Femenino"),sum)
+colnames(mujeresedad.periodo) <- c("Periodo","Femenino")
+
+hombresedad.periodo <- aggregate(Total~ Periodo,data=subset(diabetes.melitus2.edad, Sexo=="Masculino"),sum)
+colnames(hombresedad.periodo) <- c("Periodo","Masculino")
+
+generaledad.periodo <- aggregate(Total~ Periodo,data=subset(diabetes.melitus2.edad, Sexo=="General"),sum)
+colnames(generaledad.periodo) <- c("Periodo","General")
+
+#Se crean 3 tablas con la suma de los casos por periodo para femenino y masculino; y se comparan con general
+verificacion.edad <- merge(merge(generaledad.periodo,hombresedad.periodo),mujeresedad.periodo)
+
+#Se juntan las 3 tablas en una sola
+verificacion.edad$Validacion <- as.list(rowSums(subset(verificacion.edad,TRUE,c(Masculino,Femenino)),na.rm=FALSE))
+
+#Se agrega una columna con la suma de la columna Femenino y Masculino
+save(verificacion.edad,file="Validacion_Edad.RData")
+
+#Se presenta la nueva tabla comparativa
+verificacion.edad
+
+```
+
+#### <span style = "color: green"> Valores Faltantes </span>
+Revisamos los valores faltantes en las tres bases de datos.
+
+<span style = "color: blue"> *Valores Faltantes en Diabetes Mellitus Tipo II Reportados Por Fuente de Atencion*  </span>
+```{r Valores Nulos en Fuente, echo=FALSE}
+sum(is.na(diabetes.melitus2.fuente))
+```
+
+<span style = "color: blue"> *Valores Faltantes en Diabetes Mellitus Tipo II Reportados Por Mes* </span>
+```{r Valores Nulos en Mes, echo=FALSE}
+sum(is.na(diabetes.melitus2.mes))
+```
+
+
+<span style = "color: blue"> *Valores Faltantes en Diabetes Mellitus Tipo II Reportados Por Grupo de Edad* </span>
+```{r Valores Nulos en Edad, echo=FALSE}
+sum(is.na(diabetes.melitus2.edad))
+```
+
+<span style = "color: red"> *Nota: los registros faltantes son del tipo "sr" y "na"* </span>
+
+#### <span style = "color: green"> Resumen de los Datos </span>
+Se presenta un resumen de los datos para validar que la informacion que utilizaremos se encuentra en un formato manipulable.
+
+<span style = "color: blue"> *Resumen Diabetes Mellitus Tipo II Por Fuente de Atencion* </span>
+```{r summary fuente, echo=FALSE}
+summary(diabetes.melitus2.fuente)
+```
+
+
+<span style = "color: blue"> *Resumen Diabetes Mellitus Tipo II Por Mes* </span>
+```{r summary mes, echo=FALSE}
+summary(diabetes.melitus2.mes)
+```
+
+<span style = "color: blue"> *Resumen Diabetes Mellitus Tipo II Por Grupo de Edad* </span> 
+```{r  summary edad, echo=FALSE}
+summary(diabetes.melitus2.edad)
+```
+
+##Transormacion de los Datos
+Se procede a convertir los datos de las tres bases de datos a un formato ancho,en el cual cada columna representa una variable. Asimismo se cambia el nombre de cada una de las bases de datos por "Casos.DiabetesM2.Fuente", "Casos.DiabetesM2.Edad" y "Casos.DiabetesM2.Mes".
+
+```{r Cambio a formato ancho, echo=FALSE}
+
+library(reshape2)
+caso.diabetesm2.estado <- 
+diabetes.melitus2.fuente$Total <- NULL
+diabetes.melitus2.edad$Total <- NULL
+diabetes.melitus2.mes$Total <- NULL
+
+
+#Cambiamos a formato ancho la  diabetes.melitus2.fuente
+Casos.DiabetesM2.Fuente <- melt(data=diabetes.melitus2.fuente,id=c("Estado","Periodo","Sexo"))
+names(Casos.DiabetesM2.Fuente) <- c("Estado","Periodo","Sexo","Institucion","No.Casos")
+
+save(Casos.DiabetesM2.Fuente, file="CasosD_FormLa_Fuente.RData")
+
+
+#Cambiamos a formato ancho la  diabetes.melitus2.mes
+Casos.DiabetesM2.Mes <- melt(data=diabetes.melitus2.mes,id=c("Estado","Periodo","Sexo"),na.rm=TRUE)
+names(Casos.DiabetesM2.Mes) <- c("Estado","Periodo","Sexo","Mes","No.Casos")
+
+save(Casos.DiabetesM2.Mes, file="CasosD_FormLa_Mes.RData")
+
+
+#Cambiamos a formato ancho la  diabetes.melitus2.edad
+Casos.DiabetesM2.Edad <- melt(data=diabetes.melitus2.edad,id=c("Estado","Periodo","Sexo"))
+names(Casos.DiabetesM2.Edad) <- c("Estado","Periodo","Sexo","Grupo.de.Edad","No.Casos")
+
+save(Casos.DiabetesM2.Edad,file="CasosD_FormLa_Edad.RData")
+
+```
+
+A continuacion se muestra la transformacion de las bases de datos:
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Fuente de Atencion* </span> 
+```{r, echo=FALSE }
+str(Casos.DiabetesM2.Fuente)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Mes* </span> 
+```{r, echo=FALSE}
+str(Casos.DiabetesM2.Mes)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Grupo de Edad*  </span> 
+```{r, echo=FALSE}
+str(Casos.DiabetesM2.Edad)
+```
+
+Se muestran extractos de las 3 nuevas bases de datos:
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Fuente de Atencion*  </span> 
+```{r, echo=FALSE}
+tail(Casos.DiabetesM2.Fuente)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Grupo de Edad*  </span> 
+```{r, echo=FALSE}
+head(Casos.DiabetesM2.Edad)
+```
+
+<span style = "color: blue"> *Casos de Diabetes Mellitus Tipo II Reportados Por Mes* </span> 
+```{r, echo=FALSE}
+tail(Casos.DiabetesM2.Mes)
+```
+
+##Analisis Exploratorio
+
+#### <span style = "color: green"> Promedio Mensual de Casos de Diabetes Mellitus Tipo II entre Hombres y Mujeres </span>
+
+Para identificar la tendencia mensual y diferencia entre el promedio mensual por periodo entre los casos de Diabetes Mellitus Tipo II entre mujeres y hombres realizamos una tabla que contenga ambos generos y una grafica. 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(reshape)
+library(tidyr)
+```
+
+```{r Promedio por Sexo, echo=FALSE}
+
+mes.periodo.mujer <- NULL
+periodo <- c(2003:2013)
+for (i in 1:11){
+  mes.periodo.mujer[[i]] <- as.list(colSums((subset(diabetes.melitus2.mes,Periodo==periodo[i] & Sexo=="Femenino"))[,3:14],na.rm=TRUE))
+}
+
+names(mes.periodo.mujer)<- periodo
+mes.periodo.femenino <- ldply(mes.periodo.mujer, data.frame)
+names(mes.periodo.femenino) <- c("Periodo","ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
+mes.periodo.femenino$Sexo <- "Femenino"
+
+#Tabla Promedio para Hombres
+mes.periodo.hombre <- NULL
+periodo <- c(2003:2013)
+for (i in 1:11){
+  mes.periodo.hombre[[i]] <- as.list(colSums((subset(diabetes.melitus2.mes,Periodo==periodo[i] & Sexo=="Masculino"))[,3:14],na.rm=TRUE))
+}
+names(mes.periodo.hombre) <- periodo
+mes.periodo.masculino <- ldply(mes.periodo.hombre,data.frame)
+names(mes.periodo.masculino) <- c("Periodo","ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC")
+mes.periodo.masculino$Sexo <- "Masculino"
+
+#Juntamos las dos tablas en una 
+mes.periodo.sexo <- merge(mes.periodo.femenino,mes.periodo.masculino,all=TRUE)
+
+
+#Convertimos la tabla anterior a la estructura de formato larga
+Sexo.Mes <- melt(mes.periodo.sexo,id=c("Periodo","Sexo"))
+names(Sexo.Mes) <- c("Periodo","Sexo","Mes","No. Casos")
+
+#Creamos la tabla final con el promedio de cada sexo para cada mes de observacion y la convertimos a la estructura de formato largo
+prom.sexo.mes <- cast(Sexo.Mes,Mes~Sexo,mean)
+Prom.Sexo.Mensual <- melt(prom.sexo.mes,id=c("Mes"),variable.name="Sexo")
+
+save(Prom.Sexo.Mensual, file="PromediosMensualesporSexo.RData")
+
+Prom.Sexo.Mensual
+
+```
+
+En el grafico se observa que hay una gran diferencia en los casos registrados entre mujeres y hombres, ya que <span style = "color: red"> los casos de Diabetes Mellitus Tipo II  por mes durante el periodo son superiores en mujeres </span> y siempre estan por encima de 3000, mientras que los casos en hombres siempre son inferiores a 3000. 
+
+```{r grafica promedio mensual por sexo, echo=FALSE}
+ggplot(Prom.Sexo.Mensual,aes(x=Mes,y=value,group=Sexo))+geom_line(aes(colour=Sexo),linetype=2, size=1)+geom_point(aes(colour=Sexo),size=3)+theme_bw()+theme(strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.text.x = element_text(size=10),axis.text.y = element_text(size=15, angle=45),plot.title = element_text(size =20),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Numero de Casos Promedio por Genero",x="Mes",y="Numero de Casos")
+```
+
+
+#### <span style = "color: green"> Numero Promedio de Casos por Grupo de Edad </span>
+Es importante identificar la tendencia del numero promedio de casos reportado por grupo de edad definido, asimismo es importante visualizar la tendencia para hombres y mujeres. Se genera una tabla que muestra el promedio por grupo de edad para hombres y mujeres, al igual que otra para el promedio general. 
+
+```{r, echo=FALSE}
+library(tidyr)
+edad.diabetes.mujer <- NULL
+edad.diabetes.hombre <- NULL
+edad.diabetes.general <- NULL
+
+#Obtenemos por sexo para cada periodo el promedio de casos de Diabetes Mellitus Tipo II 
+grupos <- c("Menor a 1","1 a 4","5 a 9", "10 a 14","15 a 19", "20 a 24","25 a 44", "45 a 49","50 a 59"," 60 a 64","Mayor a 64","Desconocida")
+for (i in 1:11){
+  edad.caso.f<-subset(diabetes.melitus2.edad, Periodo==periodo[i] & Sexo=="Femenino")
+  edad.caso.m<-subset(diabetes.melitus2.edad, Periodo==periodo[i] & Sexo=="Masculino")
+  edad.caso.g <- subset(diabetes.melitus2.edad, Periodo==periodo[i] & Sexo=="General")
+  
+  edad.diabetes.mujer[[i]]<-as.list(sapply(edad.caso.f[2:13],mean))
+  edad.diabetes.hombre[[i]]<-as.list(sapply(edad.caso.m[2:13],mean))
+  edad.diabetes.general[[i]]<-as.list(sapply(edad.caso.g[2:13],mean))
+}
+
+#Juntamos las listas con las medias para cada periodo y genero.
+Edad.Caso.MediaMujer<- ldply(edad.diabetes.mujer,data.frame)
+Edad.Caso.MediaHombre<- ldply(edad.diabetes.hombre,data.frame)
+Edad.Caso.MediaGeneral <- ldply(edad.diabetes.general,data.frame)
+
+Edad.Caso.MediaMujer$Periodo<- factor(periodo)
+Edad.Caso.MediaHombre$Periodo<- factor(periodo)
+Edad.Caso.MediaGeneral$Periodo<- factor(periodo)
+
+Edad.Caso.MediaMujer$Sexo<- factor("Femenino")
+Edad.Caso.MediaHombre$Sexo<- factor("Masculino")
+Edad.Caso.MediaGeneral$Sexo<- factor("General")
+
+#Unimos las tablas para los generos y los datos generales en una sola tabla
+Edad.Caso.Media<-rbind(Edad.Caso.MediaMujer,Edad.Caso.MediaHombre,Edad.Caso.MediaGeneral)
+
+names(Edad.Caso.Media) <- c("Menor a 1","1 a 4","5 a 9", "10 a 14","15 a 19", "20 a 24","25 a 44", "45 a 49","50 a 59"," 60 a 64","Mayor a 64","Ignorada", "Periodo","Sexo")
+
+#Cambiamos el formato de la tabla al formato largo
+Edad.Caso.Media <- melt(Edad.Caso.Media,id=c("Periodo","Sexo"),na.rm=TRUE)
+
+names(Edad.Caso.Media) <- c("Periodo","Sexo","Grupo.Edad","Promedio.Casos.Periodo")
+
+save(Edad.Caso.Media, file="Promedios Por Grupo de Edad.RData")
+
+Edad.Caso.Media
+```
+
+
+Utilizando la tabla anterior se realiza el siguiente grafico en el cual se ve claramente que <span style = "color: red"> para el grupo de edades entre 50 y 59 anios hay mayor numero de casos promedio </span> que para otros grupos de edad. Tambien podemos observar que el numero de casos promedio en mujeres es superior al de hombres lo cual concuerda con el resultado obtenido en la grafica de numero de casos promedio por genero; asimismo podemos observar que <span style = "color: red">para grupos de edad menores a 25 casi no se presentan casos de la enfermedad, mientras que apartir de los grupos de edad mayores a 25 hay un incremento en el numero de casos promedio del padecimiento </span>. 
+
+```{r grafica numero promedio de casos por edades,echo=FALSE}
+intervalos <- 1:14
+intervalos <-1000*intervalos 
+
+ggplot(Edad.Caso.Media,aes(x=Periodo,y=Promedio.Casos.Periodo,group=Sexo))+geom_line(aes(colour=Sexo), size=1,alpha=.5)+geom_point(aes(colour=Sexo),size=1,)+facet_wrap(~Grupo.Edad,ncol=6)+theme_bw()+theme(strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.text.x = element_text(size=6, angle = 90,vjust=.5,hjust=1),axis.text.y = element_text(size=15),plot.title = element_text(size =20), axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Numero Promedio de Casos por Grupo de Edad",x="Periodo",y="Promedio Casos")+scale_y_continuous(breaks=intervalos)
+```
+
+####<span style = "color: green"> Promedio Anual Por Grupo de Edad </span>
+
+La siguiente tabla presenta el numero de casos totales de Diabetes Meliitus Tipo II por periodo para cada uno de los grupos de edad definidos para hombre y mujer. 
+
+```{r tabla preeliminar , echo=FALSE}
+#Elaboramos una lista con la suma de los casos totales para cada periodo para hombres y mujeres
+for(i in 1:11){
+   edad.caso.f<-subset(diabetes.melitus2.edad, Periodo==periodo[i] & Sexo=="Femenino")
+   edad.caso.m<-subset(diabetes.melitus2.edad, Periodo==periodo[i] & Sexo=="Masculino")
+  
+  edad.diabetes.mujer[[i]]<-as.list(sapply( edad.caso.f[2:13],sum))
+  edad.diabetes.hombre[[i]]<-as.list(sapply( edad.caso.m[2:13],sum))
+}
+
+
+Edad.Caso.Suma.Mujer<- ldply(edad.diabetes.mujer,data.frame)
+Edad.Caso.Suma.Hombre<- ldply(edad.diabetes.hombre,data.frame)
+
+#Agregamos la variable periodo y sexo a la tabla generada
+Edad.Caso.Suma.Mujer$Periodo<- factor(periodo)
+Edad.Caso.Suma.Hombre$Periodo<- factor(periodo)
+
+
+Edad.Caso.Suma.Mujer$Sexo<- factor("Femenino")
+Edad.Caso.Suma.Hombre$Sexo<- factor("Masculino")
+
+#Unimos las tablas creadas para el genero masculino y femenino en una sola tabla
+Edad.Caso.Suma<-rbind(Edad.Caso.Suma.Mujer,Edad.Caso.Suma.Hombre)
+
+names(Edad.Caso.Suma)<- c("Menor a 1","1 a 4","5 a 9", "10 a 14","15 a 19", "20 a 24","25 a 44", "45 a 49","50 a 59"," 60 a 64","Mayor a 64","Ignorada", "Periodo","Sexo")
+
+#Cambiamos la tabla consolidada al formato largo
+Edad.Caso.Suma <- melt(Edad.Caso.Suma,id=c("Periodo","Sexo"),na.rm=TRUE)
+
+names(Edad.Caso.Suma) <- c("Periodo","Sexo","Grupo.Edad","Casos.Total.Periodo")
+
+save(Edad.Caso.Suma, file="Casos Totales de Diabetes Mellitus Tipo II Por Grupo de Edad.RData")
+
+Edad.Caso.Suma
+```
+
+Con la tabla anterior generamos el promedio anual de casos de Diabetes Mellitus Tipo II por genero. 
+
+<span style = "color: cornflowerblue">El numero promedio anual de casos de Diabetes Mellitus Tipo II en mujeres registrados por periodo para los distintos grupos de edad se muestra en la siguiente tabla: </span>
+
+```{r Prom Mujeres, echo=FALSE}
+library(reshape)
+#Promedios anuales en mujeres
+Media.EdadMujer <- NULL
+for(i in 1:11){
+  prom <- subset(Edad.Caso.Suma, Sexo=="Femenino" & Periodo==periodo[i])
+  Media.EdadMujer[[i]] <-c(mean(prom$Casos.Total.Periodo),periodo[i]) 
+}
+Media.EdadMujer <- ldply(Media.EdadMujer)
+names(Media.EdadMujer)<-c("Media.Agregada","Periodo")
+
+save(Media.EdadMujer, file="Numero Promedio Anual de Casos de Diabetes Mellitus Tipo II Mujer.RData")
+
+Media.EdadMujer
+
+```
+
+<span style = "color: cornflowerblue">El numero promedio anual de casos de Diabetes Mellitus Tipo II en hombres registrados por periodo para los distintos grupos de edad se muestra en la siguiente tabla: </span>
+
+```{r Prom Hombres, echo=FALSE}
+#Promedios anuales en hombres
+Media.EdadHombre <- NULL
+
+for(i in 1:11){
+  prom <- subset(Edad.Caso.Suma, Sexo=="Masculino" & Periodo==periodo[i])
+  Media.EdadHombre[[i]] <-c(mean(prom$Casos.Total.Periodo),periodo[i]) 
+}
+
+Media.EdadHombre <- ldply(Media.EdadHombre)
+names(Media.EdadHombre)<-c("Media.Agregada","Periodo")
+
+save(Media.EdadHombre, file="Numero Promedio Anual de Casos de Diabetes Mellitus Tipo II Hombre.RData")
+
+Media.EdadHombre
+```
+
+Se usan las tablas anteriores para mostrar el numero total de casos registrados por grupo de edad para cada anio dentro del periodo de observacion para hombres y usamos como referencia el promedio de casos anual obtenido.
+
+```{r grafica total de casos, echo=FALSE}
+mybreaks <- 1:13
+mybreaks <- 8000*mybreaks
+suma.hombre <- subset(Edad.Caso.Suma, Sexo=="Masculino")
+ggplot(suma.hombre,aes(x=Grupo.Edad ,y=Casos.Total.Periodo, fill="dodgerblue1"))+geom_bar(data=suma.hombre,stat="identity")+geom_hline(data=Media.EdadHombre,aes(yintercept=Media.Agregada,group=Periodo),linetype=2)+facet_wrap(~Periodo,ncol=4)+theme_bw()+theme(strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.text.x = element_text(angle = 70,vjust=1,hjust=1,size=6),axis.text.y = element_text(size=7), plot.title = element_text(size =12),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="No. Total de Casos por Grupo de Edad Anual vs Promedio Anual en Hombres",x="Grupo de Edad",y="No. Total de Casos")+theme(legend.position="none")+coord_flip()+scale_fill_manual(values = c("dodgerblue1"))+scale_y_continuous(breaks= mybreaks)
+```
+
+Se usan las tablas anteriores para mostrar el numero total de casos registrados por grupo de edad para cada anio dentro del periodo de observacion para mujeres y usamos como referencia el promedio de casos anual obtenido.
+```{r grafica mujeres, echo=FALSE}
+mybreaks2 <- 1:13
+mybreaks2 <- 15000*mybreaks2
+
+suma.mujer <- subset(Edad.Caso.Suma, Sexo=="Femenino")
+
+ggplot(suma.hombre,aes(x=Grupo.Edad ,y=Casos.Total.Periodo, fill="maroon2"))+geom_bar(data=suma.mujer,stat="identity")+geom_hline(data=Media.EdadMujer,aes(yintercept=Media.Agregada,group=Periodo),linetype=2)+facet_wrap(~Periodo,ncol=4)+theme_bw()+theme(strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.text.x = element_text(angle = 70,vjust=1,hjust=1,size=6),axis.text.y = element_text(size=7),plot.title = element_text(size =12),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="No. Total de Casos por Grupo de Edad Anual vs Promedio Anual en Mujeres",x="Grupo de Edad",y="No. Total de Casos")+theme(legend.position="none")+coord_flip()+scale_fill_manual(values = c("maroon2"))+scale_y_continuous(breaks= mybreaks2)
+```
+
+De las graficas anteriores podemos observar que tanto para hombres como para mujeres <span style = "color: red"> el grupo de edad que va de los 50 a los 59 anios es el que mayor numero de casos totales promedio anuales presenta </span>, lo cual concuerda con el analisis realizado en el grafico de Numero Promedio de Casos por Grupo de Edad.
+
+#### <span style = "color: green"> Numero de Casos de Diabetes Mellitus Tipo II por Fuente de Atencion </span>
+
+La siguiente tabla muestra el numero de casos por fuente de atencion para el total general.
+```{r Tabla fuente, echo=FALSE}
+
+fuentes.diabetes <- NULL
+
+#Generamos la Tabla
+periodo <- c(2003:2013)
+for (i in 1:11){
+  fuentes.diabetes[[i]] <- as.list(colSums((subset(diabetes.melitus2.fuente, Periodo==periodo[i] & Sexo=="General"))[,2:10],na.rm=TRUE))
+}
+
+names(fuentes.diabetes) <- periodo
+
+fuentes.diabetes.periodo <- ldply(fuentes.diabetes,data.frame)
+
+names(fuentes.diabetes.periodo) <- c("Periodo","SSA", "IMSS.ORD","ISSSTE","IMSS.OP","DIF","PEMEX","SEDENA","SEMAR","OTRAS")
+
+#La pasamos al formato largo
+
+fuentes.diabetes.periodo <- melt(fuentes.diabetes.periodo,id=c("Periodo"),na.rm=TRUE)
+
+names(fuentes.diabetes.periodo) <- c("Periodo","Institucion","Casos.Diabetes")
+
+save(fuentes.diabetes.periodo, file="Numero de casos diabetes por fuente.RData")
+
+fuentes.diabetes.periodo
+
+```
+
+Con los datos de la tabla se genera la siguiente grafica la cual muestra la tendencia de los reportes de casos de Diabetes Mellitus Tipo II por insitucion durante los anios observados. Podemos observar en la tendencia que <span style = "color: red"> las instituciones con mayor numero de casos atendidos es el IMSS ORD. y la Secretaria de Salud</span>.
+
+```{r grafica tendencia, echo=FALSE}
+intervalos <- 1:14
+intervalos <-35000*intervalos 
+
+ggplot(fuentes.diabetes.periodo, aes(x=Periodo,y=Casos.Diabetes,group=Institucion))+
+  geom_line(aes(colour=Institucion), size=1,alpha=.5)+
+  geom_point(aes(colour=Institucion),size=1,)+
+  facet_wrap(~Institucion,ncol=5)+
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90))+
+  theme(legend.position="none",strip.text = element_text(face = "bold"),
+        axis.text.x = element_text(size=8), axis.text.y = element_text(size=11),
+        strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),
+        axis.ticks=element_line(colour=grey(.80)),
+        axis.title = element_text(colour=grey(.45), size=12), 
+        plot.title = element_text(size =20))+
+  labs(title="Numero de Casos por Fuente",x="Periodo",y="Numero Casos")+
+  scale_y_continuous(breaks=intervalos)
+```
+
+#### <span style = "color: green"> Numero de Casos de Diabetes Mellitus Tipo II por Institucion, Registrados por Periodo </span>
+
+Ahora se muestra una grafica de barras que nos ayuda a identificar cual es la institucion con mayor numero de reportes durante cada periodo. 
+
+<span style = "color: red"> Durante el periodo 2003-2011 la institucion con mayor numero de reportes fue el IMSS.ORD y para el periodo 2011-2013 la institucion con  mayor numero de reportes fue la Secretaria de Salud (SSA). </span>
+
+```{r grafica institucion,echo=FALSE}
+mybreaks3 <- 1:15
+mybreaks3 <- 25000*mybreaks3
+
+ggplot(fuentes.diabetes.periodo,aes(x=Institucion, y=Casos.Diabetes, group=Periodo,
+                                    fill=Institucion)) +
+  geom_bar(stat="identity")+
+  facet_wrap(~Periodo,ncol=3)+
+  theme_bw()+
+  scale_fill_brewer(palette=5)+
+  theme(axis.text.x=element_text(angle=90,size=8),
+        strip.text = element_text(face = "bold"),strip.background = element_blank(),
+        axis.text = element_text(colour=grey(.50)),
+        axis.ticks=element_line(colour=grey(.80)),axis.text.x = element_text(size=10), 
+        axis.text.y = element_text(size=5),axis.title = element_text(colour=grey(.45)))+
+  labs(title=" Numero de casos de Diabetes por Institucion por Periodo",
+       x="Institucion",y="Numero de Casos", plot.title = element_text(size =10)) +scale_y_continuous(breaks= mybreaks3)
+```
+
+####<span style = "color: green"> Numero Promedio de Casos Atendidos por Institucion y Genero. 
+Se mustra la siguiente tabla la cual utiliza la informacion utilizada perviamente y se compara con el promedio de casos por periodo, diferenciando el genero. 
+
+```{r tabla genero, echo=FALSE, warning=FALSE}
+library(tidyr)
+fuente.diabetes.mujer <- NULL
+fuente.diabetes.hombre <- NULL
+fuente.diabetes.general <- NULL
+
+periodo <- c(2003:2013)
+#Obtenemos por sexo para cada periodo el promedio de casos de Diabetes Mellitus Tipo II 
+fuentes <- c("SSA", "IMSS.ORD","ISSSTE","IMSS.OP","DIF","PEMEX","SEDENA","SEMAR","OTRAS")
+
+
+for (i in 1:11){
+  fuente.caso.f<-subset(diabetes.melitus2.fuente, Periodo==periodo[i]&Sexo=="Femenino")
+  fuente.caso.m<-subset(diabetes.melitus2.fuente, Periodo==periodo[i]&Sexo=="Masculino")
+  fuente.caso.g <- subset(diabetes.melitus2.fuente, Periodo==periodo[i]&Sexo=="General")
+ 
+
+  fuente.diabetes.mujer[[i]]<-as.list(sapply(fuente.caso.f[2:12],mean))
+  fuente.diabetes.hombre[[i]]<-as.list(sapply(fuente.caso.m[2:12],mean))
+  fuente.diabetes.general[[i]]<-as.list(sapply(fuente.caso.g[2:12],mean))
+ }
+
+#Juntamos las listas con las medias para cada periodo y genero.
+Fuente.Caso.MediaMujer<- ldply(fuente.diabetes.mujer,data.frame)
+Fuente.Caso.MediaHombre<- ldply(fuente.diabetes.hombre,data.frame)
+Fuente.Caso.MediaGeneral <- ldply(fuente.diabetes.general,data.frame)
+
+Fuente.Caso.MediaMujer$Periodo<- factor(periodo)
+Fuente.Caso.MediaHombre$Periodo<- factor(periodo)
+Fuente.Caso.MediaGeneral$Periodo<- factor(periodo)
+
+Fuente.Caso.MediaMujer$Sexo<- factor("Femenino")
+Fuente.Caso.MediaHombre$Sexo<- factor("Masculino")
+Fuente.Caso.MediaGeneral$Sexo<- factor("General")
+
+#Unimos las tablas para los generos y los datos generales en una sola tabla
+Fuente.Caso.Media<-rbind(Fuente.Caso.MediaMujer,Fuente.Caso.MediaHombre,Fuente.Caso.MediaGeneral)
+
+names(Fuente.Caso.Media) <- c("SSA", "IMSS.ORD","ISSSTE","IMSS.OP","DIF","PEMEX","SEDENA","SEMAR","OTRAS", "Periodo", "Sexo")
+
+#Cambiamos el formato de la tabla al formato largo
+Fuente.Caso.Media <- melt(Fuente.Caso.Media,id=c("Periodo","Sexo"),na.rm=TRUE)
+
+names(Fuente.Caso.Media) <- c("Periodo","Sexo","Fuente","Promedio.Casos.Periodo")
+
+save(Fuente.Caso.Media, file="Promedios Por Fuente.RData")
+
+Fuente.Caso.Media
+```
+En la siguiente grafica se observa que <span style = "color: red">para las mujeres en promedio se reportaron mayor numero de casos en las instituciones </span>.
+
+```{r Grafica Genero, echo=FALSE, warning=FALSE}
+intervalos <- 1:17
+intervalos <-700*intervalos 
+
+ggplot(Fuente.Caso.Media,aes(x=Periodo,y=Promedio.Casos.Periodo,group=Sexo))+
+  geom_line(aes(colour=Sexo), size=1,alpha=.5)+
+  geom_point(aes(colour=Sexo),size=1,)+
+  facet_wrap(~Fuente,ncol=3)+
+  theme_bw() +
+  theme(axis.text.x=element_text(angle=90,size=8),
+        strip.text = element_text(face = "bold"),strip.background = element_blank(),
+        axis.text = element_text(colour=grey(.50)),
+        axis.ticks=element_line(colour=grey(.80)),axis.text.x = element_text(size=15), 
+        axis.text.y = element_text(size=6),axis.title = element_text(colour=grey(.45)))+
+  labs(title="Numero Promedio de Casos por Fuente de Atencion",x="Periodo",y="Promedio Casos")+
+  scale_y_continuous(breaks=intervalos)
+```
+
+####<span style = "color: green"> Numero Promedio de Casos por Estado </span>
+
+Es importante identificar el area geografica donde se presenta el mayor numero promedio de casos para que los Estados se puedan encargar de las politicas de salud necesarias. 
+
+A continuacion se presenta una tabla con la informacion de los casos promedio de Diabetes por Estado de la Republica.
+
+```{r Media_Casos_Estado, echo=FALSE, warning=FALSE}
+Prom.Estados <- NULL
+Estados <- c("Aguascalientes", "Baja California", "Baja California Sur","Campeche", "Chiapas", "Chihuahua","Coahuila", "Colima", "Distrito Federal", "Durango", "Guanajuato","Guerrero", "Hidalgo", "Jalisco", "Mexico", "Michoacan",  "Morelos","Nayarit","Nuevo Leon", "Oaxaca", "Puebla", "Queretaro", "Quintana Roo","San Luis Potosi", "Sinaloa", "Sonora", "Tabasco","Tamaulipas", "Tlaxcala","Veracruz","Yucatan", "Zacatecas")
+
+
+for(i in 1:32){
+  media.entidad <- subset(Casos.DiabetesM2.Fuente, Sexo=="General" & Estado== Estados[i])
+  Prom.Estados[[i]]<-c(mean(media.entidad$No.Casos, na.rm=TRUE),Estados[[i]])
+}
+
+  Prom.Estados<-ldply(Prom.Estados)
+
+  names(Prom.Estados)<-c("Media.Diabetes", "Estado")
+
+  Prom.Estados$Media.Diabetes<-as.numeric(Prom.Estados$Media.Diabetes)
+
+save(Prom.Estados, file="Media de casos de Diabetes por Estado.RData")
+
+Prom.Estados
+```
+
+En la grafica elaborada con la tabla anterior podemos observar que durante todos los anios <span style = "color: red">el Estado de Mexico es el que presenta mayor numero de casos promedio de Diabetes Mellitus Tipo II </span>.
+
+
+```{r Grafica Estados, echo=FALSE, warning=FALSE}
+mybreaks4 <- 1:11
+mybreaks4 <- 1000*mybreaks4
+
+
+color.prom <- c(NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,"withcolor",NA,NA,NA,NA, NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA,NA)
+
+
+ggplot(Prom.Estados, aes(x = Estado, y = Media.Diabetes, fill=color.prom))+
+  geom_bar(stat="identity")+ 
+  labs(title="Casos de Diabetes Mellitus (II) por Estado",
+       x = "Estado", y = "Numero de Casos Promedio")+
+  theme_bw()+
+  theme(strip.text = element_text(face = "bold"),strip.background = element_blank(),
+        axis.text = element_text(colour=grey(.50)),
+        axis.text.x = element_text(size=11, angle=90, vjust=.5),
+        axis.text.y = element_text(size=13, angle=360),
+        plot.title = element_text(size =20),
+        axis.ticks = element_line(colour=grey(.80)),
+        axis.title = element_text(colour=grey(.45)))+
+  theme(legend.position="none") + scale_y_continuous(breaks= mybreaks4)
+```
+
+###Estados con Mayor Numero de Reportes por Grupo de Edad
+
+A continuacion se presentan un grafico el cual muestra los 6 estados que presentan un mayor numero promedio de casos por grupo de edad.
+
+```{r boxplot, echo=FALSE, warning=FALSE}
+
+mybreaks5 <- 1:15
+mybreaks5 <- 1500*mybreaks5
+
+f <- function(x) {
+  t <- quantile(x, probs = c(0.0, 0.25, 0.5, 0.75))
+  s <- 2.5*t[[4]]-1.5*t[[2]]   
+   r<-c(t,s) 
+  
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  r
+}
+
+
+estados.mayor.ocurrencia <- subset(Casos.DiabetesM2.Edad,Sexo=="General" & Estado %in% c("Mexico","Distrito Federal","Jalisco","Chihuahua","Veracruz","Guanajuato"))
+
+
+ggplot(estados.mayor.ocurrencia, aes(x = Grupo.de.Edad, y = No.Casos,fill=Grupo.de.Edad)) +stat_summary(fun.data = f, geom="boxplot")+facet_wrap(~Estado,ncol=3)+ labs(title = "Estados con Mayor Numero de Casos por Grupo de Edad", x = "Grupo de Edad", y = "Numero de Casos") +theme_bw()+theme(strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.text.y = element_text(size=6),axis.text.x = element_text(angle = 90,vjust=.2,hjust=1, size=8),plot.title = element_text(size =15), axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+ guides(fill = FALSE) + scale_y_continuous(breaks= mybreaks5)
+
+```
+
+##Conclusiones
+Con las graficas elaboradas en el Analisis Exploratorio concluimos lo siguiente:
+
+<span style = "color: red">-</span> Las instituciones que atienden un mayor numero de casos son la Secretaria de Salud y el IMSS ORD, por lo tanto es necesario destinar un mayor numero de recursos a estad dos instituciones.
+
+<span style = "color: red">-</span> El Estado en el que se presenta mayor numero de casos promedio por grupo de edad es el Estado de Mexico, seguido por el Distrito Federal, Jalisco, Veracruz,Chihuahua y Guanajuato.
+
+<span style = "color: red">-</span> Los casos de Diabetes Mellitus Tipo II se presentan con mayor frecuencia en mujeres.
+
+<span style = "color: red">-</span> El grupo de edad mas afectado es el que va de los 50 a los 59 anios, seguido por el grupo de edad mayor a 64 anios. Para solucionar este problema es importante realizar campanias de prevencion para disminuir la tendencia.
+
+De acuerdo al analisis realizado y con ayuda de la siguiente grafica, podemos observar que los casos de Diabetes Mellitus Tipo II tuvieron una tendencia a la alza desde el anio 2003 hasta el anio 2011 en el cual tuvieron su punto mas alto; sin embargo a partir del 2011 los casos han venido disminuyendo considerablemente. 
+
+```{r Grafica Conclusion, warning=FALSE, echo=FALSE}
+diabetesm2.general <- subset(Casos.DiabetesM2.Edad, Sexo=="General")
+total.por.periodo <- aggregate(No.Casos~Periodo,data=diabetesm2.general,sum)
+
+intervalo <- c(min(total.por.periodo$No.Casos)-1000,max(total.por.periodo$No.Casos)+18000)
+
+ggplot(total.por.periodo, aes(x=Periodo,y=No.Casos,group=1))+geom_line(linetype=1,size=1.5, color="deepskyblue")+geom_point(color="dodgerblue4", size=2)+theme_bw()+theme(strip.background = element_blank(),axis.text = element_text(colour=grey(.50)),axis.ticks=element_line(colour=grey(.80)),axis.title = element_text(colour=grey(.45)))+labs(title="Tendencia del total de casos anuales durante el periodo 2003-2013",x=NULL,y="Numero de casos")+ scale_y_continuous(limits=intervalo)
+```
+
+
+Derivado de los resultados obtenidos podemos observar que gracias a los programas establecidos por el Gobierno Federal a traves de la Secretaria de Salud en la detecci??n de individuos con diabetes no diagnosticados, as?? como de personas con factores de riesgo y  problemas de obesidad, el numero de casos promedio ha venido disminuyendo a partir del anio 2011; por lo que es de suma importancia seguir difundiendo las campanias de prevencion y diagnostico. 
+
+
+##Algunas Referencias de Consulta Adicionales: 
+
+-Fuente: http://promocion.salud.gob.mx/dgps/descargas1/estrategia/Estrategia_con_portada.pdf
+
+-Fuente: http://www.salud.gob.mx/unidades/cdi/documentos/diabetes_mellitus.pdf
+
+-Fuente: http://www.alad-latinoamerica.org/phocadownload/guias%20alad.pdf
+
+-Fuente: http://www.facmed.unam.mx/sms/seam2k1/2008/may_01_ponencia.html
+
+<span style = "color: red"> *Nota: Consultar el diccionario para conocer mas acerca de las variables utilizadas* </span> 
+
+<span style = "color: red"> *Nota: Derivado de la version del software utilizado se omitieron los acentos* </span> 
+
